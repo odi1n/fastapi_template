@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  web:
+    container_name: iri_backend
+    build:
+      context: ./
+      dockerfile: _docker/web/Dockerfile
+    command: >
+      bash -c "uvicorn src.app:app --port 8000 --host 0.0.0.0"
+    volumes:
+      - .:/app
+      - /data/media:/home/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+
+  db:
+    container_name: iri_postgres
+    image: postgres:13.3
+    restart: always
+    hostname: postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: '${DB_NAME}'
+      POSTGRES_USER: '${DB_USER}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD}'
+      CONFIGS: "listen_addresses:'*',max_replication_slots:5"
+    ports:
+      - '${DB_PORT}:5432'
+    volumes:
+      - /data/postgres/:/var/lib/postgresql/data
+    healthcheck:
+      interval: 5s
+      timeout: 5s
+      retries: 5
