@@ -8,14 +8,14 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-fastapi = "^0.98.0"
-uvicorn = {extras = ["standard"], version = "^0.22.0"}
-pydantic = { extras = ["dotenv", "email"], version = "^1.10.5" }
+fastapi = "^0.103.0"
+uvicorn = {extras = ["standart"], version = "^0.23.2"}
+pydantic = {extras = ["dotenv", "email", "settings"], version = "^2.3.0"}
 
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.3.3"
 pytest = "^7.4.0"
+pre-commit = "^3.3.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -23,7 +23,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.autoflake]
 check = false
-imports = ["fastapi", "requests", "pydantic"]
+imports = ["fastapi", "pydantic"]
 
 [tool.black]
 multi_line_output = 3
@@ -53,6 +53,6 @@ exclude = '''
 profile = "black"
 skip_glob = ["migrations"]
 skip = ["migrations"]
-known_fastapi = ["fastapi", "pydantic", "pyrogram"]
+known_fastapi = ["fastapi", "pydantic",]
 default_section = "THIRDPARTY"
 sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
