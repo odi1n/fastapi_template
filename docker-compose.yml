@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   web:
-    container_name: iri_backend
+    container_name: fastapi_tmp
     build:
       context: ./
       dockerfile: _docker/web/Dockerfile
@@ -17,8 +17,8 @@ services:
       - .env
 
   db:
-    container_name: iri_postgres
-    image: postgres:13.3
+    container_name: fastapi_tmp_db
+    image: postgres
     restart: always
     hostname: postgres
     env_file:
