@@ -65,5 +65,6 @@ repos:
     rev: 'v1.4.1'
     hooks:
       - id: mypy
+        args: ['--no-namespace-packages', ]
         additional_dependencies:
           - 'pydantic'
