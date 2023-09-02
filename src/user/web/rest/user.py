@@ -17,12 +17,13 @@ router = APIRouter()
 @router.get("/", tags=["Пользователи"])
 @inject
 async def user_list(
-    _: Auth = Depends(Auth),
+    # _: Auth = Depends(Auth),
     filter_: sc.UserListFilter = Depends(),
     user_service: UserService = Depends(Provide[Container.user_service]),
-) -> dict[str, str]:
+) -> ResponseList[sc.UserView]:
+    data = await user_service.repository_objects(filter_)
     return ResponseList[sc.UserView](
-        data=await user_service.repository_objects(filter_),
+        data=data,
         meta=filter_.meta,
     )
 
