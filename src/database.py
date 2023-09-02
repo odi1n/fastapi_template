@@ -10,8 +10,8 @@ BaseModel = declarative_base()
 
 
 class Database:
-    def __init__(self) -> None:
-        self._engine = create_async_engine(setting.DB_DSN, echo=setting.DEBUG)
+    def __init__(self, db_url: str) -> None:
+        self._engine = create_async_engine(db_url, echo=setting.DEBUG)
         self._async_session = async_sessionmaker(
             bind=self._engine,
             class_=AsyncSession,
