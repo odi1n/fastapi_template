@@ -1,4 +1,13 @@
-from typing import Any, Generic, List, Optional, Type, TypeVar
+from typing import (
+    Any,
+    AsyncContextManager,
+    Callable,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 from pydantic import BaseModel as PydanticModel
 from pydantic._internal._model_construction import ModelMetaclass
@@ -42,7 +51,8 @@ class SqlAlchemyRepository(
 
         return stmt
 
-    def _apply_options(self, stmt: Select) -> Select:
+    @staticmethod
+    def _apply_options(stmt: Select) -> Select:
         return stmt
 
     def _apply_filters(
@@ -142,12 +152,12 @@ class SqlAlchemyRepository(
         self,
         model: ModelType,
         view_model: Type["ViewSchemaType"],
-        session: AsyncSession,
+        session_factory: Callable[..., AsyncContextManager[AsyncSession]],
         filter_builder: Optional[FilterBuilder] = None,
     ):
         self.model = model
         self.view_model = view_model
-        self.session = session
+        self.session_factory = session_factory
 
         if filter_builder:
             self.filter_builder = filter_builder
@@ -156,56 +166,68 @@ class SqlAlchemyRepository(
 
     async def get(self, filter_: FilterSchemaType) -> Optional[ViewSchemaType]:
         stmt = self._get_statement(filter_)
-        model = await self.session.scalar(stmt)
-        return (
-            self._model_to_pydantic(model, self.view_model)
-            if model is not None
-            else None
-        )
+
+        async with self.session_factory() as session:
+            model = await session.scalar(stmt)
+            return (
+                self._model_to_pydantic(model, self.view_model)
+                if model is not None
+                else None
+            )
 
     async def get_list(self, filter_: ListFilterSchemaType) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
-        result = await self.session.scalars(stmt)
-        filter_.set_total(
-            await self.session.scalar(
-                select(func.count()).select_from(
-                    stmt.offset(None).limit(None).order_by(None),
+
+        async with self.session_factory as session:
+            result = await session.scalars(stmt)
+            filter_.set_total(
+                await session.scalar(
+                    select(func.count()).select_from(
+                        stmt.offset(None).limit(None).order_by(None),
+                    ),
                 ),
-            ),
-        )
-        return [self._model_to_pydantic(model, self.view_model) for model in result]
+            )
+            return [self._model_to_pydantic(model, self.view_model) for model in result]
 
     async def get_all(
         self,
         filter_: ListFilterSchemaType,
     ) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
-        result = await self.session.scalars(stmt.limit(None).offset(None))
-        return [self._model_to_pydantic(model, self.view_model) for model in result]
+
+        async with self.session_factory as session:
+            result = await session.scalars(stmt.limit(None).offset(None))
+            return [self._model_to_pydantic(model, self.view_model) for model in result]
 
     async def create(self, obj_in: CreateSchemaType) -> Optional[ViewSchemaType]:
         model = self._pydantic_to_model(obj_in, self.model)
-        self.session.add(model)
-        await self.session.flush()
-        return self._model_to_pydantic(model, self.view_model)
+
+        async with self.session_factory as session:
+            session.add(model)
+            await session.flush()
+            return self._model_to_pydantic(model, self.view_model)
 
     async def update(
         self, obj_in: UpdateSchemaType, filter_: FilterSchemaType
     ) -> Optional[ViewSchemaType]:
         stmt = self._get_statement(filter_)
-        result = await self.session.scalar(stmt)
 
-        if result is None:
-            return None
-        result.__dict__
-        model = self._pydantic_to_model(obj_in, result)
+        async with self.session_factory as session:
+            result = await session.scalar(stmt)
 
-        self.session.add(result)
-        await self.session.flush()
-        return self._model_to_pydantic(model, self.view_model)
+            if result is None:
+                return None
+            result.__dict__
+            model = self._pydantic_to_model(obj_in, result)
+
+            session.add(result)
+            await session.flush()
+            return self._model_to_pydantic(model, self.view_model)
 
     async def delete(self, filter_: FilterSchemaType) -> bool:
         stmt = delete(self.model).where(self.model.id == filter_.id)
-        result = await self.session.execute(stmt)
-        await self.session.flush()
-        return result.rowcount > 0
+
+        async with self.session_factory as session:
+            result = await session.execute(stmt)
+            await session.flush()
+            return result.rowcount > 0

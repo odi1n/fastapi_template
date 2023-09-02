@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import AsyncContextManager, Callable, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,17 +21,22 @@ class UserRepository(
         sc.UserListFilter,
     ],
 ):
-    def __init__(self, session: AsyncSession):
+    def __init__(
+        self,
+        session_factory: Callable[..., AsyncContextManager[AsyncSession]],
+    ):
         super().__init__(
             view_model=sc.UserView,
             model=User,
-            session=session,
+            session_factory=session_factory,
         )
 
     async def get_by_email(self, email: str) -> Optional[sc.UserUnprotectedView]:
         stmt = select(User).where(User.email == email)
-        result = await self.session.scalars(stmt)
-        user = result.first()
-        if user:
-            return sc.UserUnprotectedView.parse_obj(user.__dict__)
-        return None
+
+        async with self.session_factory as session:
+            result = await session.scalars(stmt)
+            user = result.first()
+            if user:
+                return sc.UserUnprotectedView.parse_obj(user.__dict__)
+            return None
