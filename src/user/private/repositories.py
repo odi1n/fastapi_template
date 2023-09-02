@@ -14,11 +14,11 @@ class UserRepository(
     UserRepositoryInterface,
     SqlAlchemyRepository[
         User,
-        sc.UserFilter,
-        sc.UserListFilter,
+        sc.UserView,
         sc.UserCreate,
         sc.UserUpdate,
-        sc.UserView,
+        sc.UserFilter,
+        sc.UserListFilter,
     ],
 ):
     def __init__(self, session: AsyncSession):

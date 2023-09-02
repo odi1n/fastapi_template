@@ -13,20 +13,26 @@ from src.database import BaseModel
 from .filter_builder import FilterBuilder
 
 ModelType = TypeVar("ModelType", bound=BaseModel, covariant=True)
-FilterType = TypeVar("FilterType", bound=Filter)
-ListFilterType = TypeVar("ListFilterType", bound=ListFilter)
-CreateType = TypeVar("CreateType", bound=PydanticModel)
-UpdateType = TypeVar("UpdateType", bound=PydanticModel)
-ViewType = TypeVar("ViewType", bound=PydanticModel)
-SelectType = TypeVar("SelectType", bound=PydanticModel)
-ArraySelectionType = TypeVar("ArraySelectionType", bound=BaseModel)
+FilterSchemaType = TypeVar("FilterSchemaType", bound=Filter)
+ListFilterSchemaType = TypeVar("ListFilterSchemaType", bound=ListFilter)
+CreateSchemaType = TypeVar("CreateSchemaType", bound=PydanticModel)
+UpdateSchemaType = TypeVar("UpdateSchemaType", bound=PydanticModel)
+ViewSchemaType = TypeVar("ViewSchemaType", bound=PydanticModel)
+SelectSchemaType = TypeVar("SelectSchemaType", bound=PydanticModel)
 
 
 class SqlAlchemyRepository(
     AsyncBaseRepositoryInterface,
-    Generic[ModelType, FilterType, ListFilterType, CreateType, UpdateType, ViewType],
+    Generic[
+        ModelType,
+        ViewSchemaType,
+        CreateSchemaType,
+        UpdateSchemaType,
+        FilterSchemaType,
+        ListFilterSchemaType,
+    ],
 ):
-    def _get_statement(self, filter_: FilterType, stmt: Select = None) -> Select:
+    def _get_statement(self, filter_: FilterSchemaType, stmt: Select = None) -> Select:
         if stmt is None:
             stmt = select(self.model)
 
@@ -39,14 +45,16 @@ class SqlAlchemyRepository(
     def _apply_options(self, stmt: Select) -> Select:
         return stmt
 
-    def _apply_filters(self, filter_: ListFilterType, stmt: Select = None) -> Select:
+    def _apply_filters(
+        self, filter_: ListFilterSchemaType, stmt: Select = None
+    ) -> Select:
         if stmt is None:
             stmt = select(self.model)
         return self.filter_builder.build(filter_, stmt)
 
     def _get_list_statement(
         self,
-        filter_: ListFilterType,
+        filter_: ListFilterSchemaType,
         stmt: Select = None,
     ) -> Select:
         if stmt is None:
@@ -125,7 +133,7 @@ class SqlAlchemyRepository(
         self,
         model: BaseModel,
         view_model: ModelMetaclass,
-    ) -> ViewType | SelectType:
+    ) -> ViewSchemaType | SelectSchemaType:
         return view_model.parse_obj(
             self._model_to_dict(model),
         )
@@ -133,7 +141,7 @@ class SqlAlchemyRepository(
     def __init__(
         self,
         model: ModelType,
-        view_model: Type["ViewType"],
+        view_model: Type["ViewSchemaType"],
         session: AsyncSession,
         filter_builder: Optional[FilterBuilder] = None,
     ):
@@ -146,7 +154,7 @@ class SqlAlchemyRepository(
         else:
             self.filter_builder = FilterBuilder(model)
 
-    async def get(self, filter_: FilterType) -> Optional[ViewType]:
+    async def get(self, filter_: FilterSchemaType) -> Optional[ViewSchemaType]:
         stmt = self._get_statement(filter_)
         model = await self.session.scalar(stmt)
         return (
@@ -155,7 +163,7 @@ class SqlAlchemyRepository(
             else None
         )
 
-    async def get_list(self, filter_: ListFilterType) -> List[ViewType]:
+    async def get_list(self, filter_: ListFilterSchemaType) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
         result = await self.session.scalars(stmt)
         filter_.set_total(
@@ -169,21 +177,21 @@ class SqlAlchemyRepository(
 
     async def get_all(
         self,
-        filter_: ListFilterType,
-    ) -> List[ViewType]:
+        filter_: ListFilterSchemaType,
+    ) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
         result = await self.session.scalars(stmt.limit(None).offset(None))
         return [self._model_to_pydantic(model, self.view_model) for model in result]
 
-    async def create(self, obj_in: CreateType) -> Optional[ViewType]:
+    async def create(self, obj_in: CreateSchemaType) -> Optional[ViewSchemaType]:
         model = self._pydantic_to_model(obj_in, self.model)
         self.session.add(model)
         await self.session.flush()
         return self._model_to_pydantic(model, self.view_model)
 
     async def update(
-        self, obj_in: UpdateType, filter_: FilterType
-    ) -> Optional[ViewType]:
+        self, obj_in: UpdateSchemaType, filter_: FilterSchemaType
+    ) -> Optional[ViewSchemaType]:
         stmt = self._get_statement(filter_)
         result = await self.session.scalar(stmt)
 
@@ -196,7 +204,7 @@ class SqlAlchemyRepository(
         await self.session.flush()
         return self._model_to_pydantic(model, self.view_model)
 
-    async def delete(self, filter_: FilterType) -> bool:
+    async def delete(self, filter_: FilterSchemaType) -> bool:
         stmt = delete(self.model).where(self.model.id == filter_.id)
         result = await self.session.execute(stmt)
         await self.session.flush()
