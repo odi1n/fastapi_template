@@ -1,14 +1,12 @@
-from fastapi import Depends
+from typing import Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.repositories.sqlalchemy import SqlAlchemyRepository
-
-# from src.database import get_session
 from src.user import schemas as sc
 from src.user.interfaces import UserRepositoryInterface
 
-from ...database import get_session
 from .models.user import User
 
 
@@ -23,14 +21,14 @@ class UserRepository(
         sc.UserView,
     ],
 ):
-    def __init__(self, session: AsyncSession = Depends(get_session)):
+    def __init__(self, session: AsyncSession):
         super().__init__(
             view_model=sc.UserView,
             model=User,
             session=session,
         )
 
-    async def get_by_email(self, email: str) -> sc.UserUnprotectedView | None:
+    async def get_by_email(self, email: str) -> Optional[sc.UserUnprotectedView]:
         stmt = select(User).where(User.email == email)
         result = await self.session.scalars(stmt)
         user = result.first()

@@ -1,5 +1,5 @@
 import abc
-from typing import Generic, List, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel
 
@@ -19,7 +19,7 @@ class AsyncBaseRepositoryInterface(
     async def get(
         self,
         filter_: FilterModel,
-    ) -> ViewModel | None:
+    ) -> Optional[ViewModel]:
         ...
 
     @abc.abstractmethod
@@ -40,7 +40,7 @@ class AsyncBaseRepositoryInterface(
     async def create(
         self,
         obj_in: CreateModel,
-    ) -> ViewModel | None:
+    ) -> Optional[ViewModel]:
         ...
 
     @abc.abstractmethod
@@ -48,7 +48,7 @@ class AsyncBaseRepositoryInterface(
         self,
         obj_in: UpdateModel,
         filter_: FilterModel,
-    ) -> ViewModel | None:
+    ) -> Optional[ViewModel]:
         ...
 
     @abc.abstractmethod

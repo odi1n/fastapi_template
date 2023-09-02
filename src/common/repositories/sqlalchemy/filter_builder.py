@@ -15,7 +15,7 @@ class FilterBuilder:
     def __init__(self, model: DeclarativeMeta):
         self._model = model
 
-    def build(self, filter_: ListFilter, stmt: Select | None = None) -> Select:
+    def build(self, filter_: ListFilter, stmt: Optional[Select] = None) -> Select:
         if stmt is None:
             stmt = select(self._model)
 

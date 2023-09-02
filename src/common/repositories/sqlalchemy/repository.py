@@ -1,4 +1,4 @@
-from typing import Any, Generic, List, Type, TypeVar
+from typing import Any, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel as PydanticModel
 from pydantic._internal._model_construction import ModelMetaclass
@@ -135,18 +135,18 @@ class SqlAlchemyRepository(
         model: ModelType,
         view_model: Type["ViewType"],
         session: AsyncSession,
-        filter_builder: FilterBuilder | None = None,
+        filter_builder: Optional[FilterBuilder] = None,
     ):
         self.model = model
         self.view_model = view_model
         self.session = session
 
-        if filter_builder is None:
-            self.filter_builder = FilterBuilder(model)
-        else:
+        if filter_builder:
             self.filter_builder = filter_builder
+        else:
+            self.filter_builder = FilterBuilder(model)
 
-    async def get(self, filter_: FilterType) -> ViewType | None:
+    async def get(self, filter_: FilterType) -> Optional[ViewType]:
         stmt = self._get_statement(filter_)
         model = await self.session.scalar(stmt)
         return (
@@ -175,13 +175,15 @@ class SqlAlchemyRepository(
         result = await self.session.scalars(stmt.limit(None).offset(None))
         return [self._model_to_pydantic(model, self.view_model) for model in result]
 
-    async def create(self, obj_in: CreateType) -> ViewType | None:
+    async def create(self, obj_in: CreateType) -> Optional[ViewType]:
         model = self._pydantic_to_model(obj_in, self.model)
         self.session.add(model)
         await self.session.flush()
         return self._model_to_pydantic(model, self.view_model)
 
-    async def update(self, obj_in: UpdateType, filter_: FilterType) -> ViewType | None:
+    async def update(
+        self, obj_in: UpdateType, filter_: FilterType
+    ) -> Optional[ViewType]:
         stmt = self._get_statement(filter_)
         result = await self.session.scalar(stmt)
 

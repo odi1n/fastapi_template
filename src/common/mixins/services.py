@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from pydantic import BaseModel
 
@@ -15,20 +15,20 @@ class ServiceRepositoryMixin(Generic[TypeRepository, TypeView]):
     def __init__(self, repository: TypeRepository):
         self.repository = repository
 
-    async def repository_object(self, filter_: Filter) -> TypeView | None:
+    async def repository_object(self, filter_: Filter) -> Optional[TypeView]:
         return await self.repository.get(filter_)
 
     async def repository_objects(self, filter_: ListFilter) -> list[TypeView]:
         return await self.repository.get_list(filter_)
 
-    async def repository_create_object(self, obj_in: BaseModel) -> TypeView | None:
+    async def repository_create_object(self, obj_in: BaseModel) -> Optional[TypeView]:
         return await self.repository.create(obj_in)
 
     async def repository_update_object(
         self,
         filter_: Filter,
         obj_in: BaseModel,
-    ) -> TypeView | None:
+    ) -> Optional[TypeView]:
         return await self.repository.update(obj_in, filter_)
 
     async def repository_delete_object(self, filter_: Filter) -> bool:

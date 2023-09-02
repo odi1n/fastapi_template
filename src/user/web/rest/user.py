@@ -1,3 +1,5 @@
+from typing import Optional
+
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -54,7 +56,7 @@ async def user_create(
     obj_in: sc.UserCreate,
     _: Auth = Depends(Auth),
     user_service: UserService = Depends(Provide[Container.user_service]),
-) -> sc.UserView | None:
+) -> Optional[sc.UserView]:
     try:
         result = await user_service.repository_create_object(obj_in)
         await user_service.repository.session.commit()
@@ -77,7 +79,7 @@ async def user_update(
     obj_in: sc.UserUpdate,
     _: Auth = Depends(Auth),
     user_service: UserService = Depends(Provide[Container.user_service]),
-) -> sc.UserView | None:
+) -> Optional[sc.UserView]:
     filter_ = sc.UserFilter(id=id)
 
     result = await user_service.repository_update_object(filter_, obj_in)

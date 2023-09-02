@@ -1,15 +1,17 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field, PrivateAttr
 
 
 class BaseFilter(BaseModel):
-    id: int | None
+    id: Optional[int]
 
 
 class BaseListFilter(BaseModel):
     limit: int = Field(100, gt=0)
     offset: int = Field(0, ge=0)
-    sort: str | None
-    search: str | None
+    sort: Optional[str]
+    search: Optional[str]
 
     _total: int = PrivateAttr(0)
 
@@ -24,7 +26,7 @@ class BaseListFilter(BaseModel):
             "offset": self.offset,
         }
 
-    def get_sort(self) -> tuple[str | None, int]:
+    def get_sort(self) -> tuple[Optional[str], int]:
         if not isinstance(self.sort, str):
             return None, 0
 

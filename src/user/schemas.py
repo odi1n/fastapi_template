@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pydantic as pd
 
 from src.common.mixins.schemas import CreatedUpdatedMixin, PrimaryKeyMixin
@@ -5,10 +7,10 @@ from src.common.schemas.filters import Filter, ListFilter
 
 
 class BaseUser(pd.BaseModel):
-    first_name: str | None
-    middle_name: str | None
-    last_name: str | None
-    position: str | None
+    first_name: Optional[str]
+    middle_name: Optional[str]
+    last_name: Optional[str]
+    position: Optional[str]
 
 
 class UserCreate(BaseUser):
@@ -17,7 +19,7 @@ class UserCreate(BaseUser):
 
 
 class UserUpdate(BaseUser):
-    password: str | None = pd.Field(min_length=6)
+    password: Optional[str] = pd.Field(min_length=6)
 
 
 class UserView(BaseUser, PrimaryKeyMixin, CreatedUpdatedMixin):
@@ -33,7 +35,7 @@ class UserFilter(Filter):
 
 
 class UserListFilter(ListFilter):
-    full_name: str | None
+    full_name: Optional[str]
 
     class FilterConfig:
         model = UserView
