@@ -10,7 +10,6 @@ class BaseUser(pd.BaseModel):
     first_name: Optional[str]
     middle_name: Optional[str]
     last_name: Optional[str]
-    position: Optional[str]
 
 
 class UserCreate(BaseUser):
