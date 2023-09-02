@@ -1,13 +1,11 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from src.server import Server
 
 
-@app.get("/")
-async def root() -> dict[str, str]:
-    return {"message": "Hello World"}
+def create_app() -> FastAPI:
+    app = FastAPI()
+    return Server(app).get_app()
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str) -> dict[str, str]:
-    return {"message": f"Hello {name}"}
+app = create_app()
