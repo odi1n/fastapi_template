@@ -15,6 +15,14 @@ alembic = "^1.12.0"
 sqlalchemy = {extras = ["mypy"], version = "^2.0.20"}
 apscheduler = "^3.10.4"
 aiohttp = "^3.8.5"
+dependency-injector = "^4.41.0"
+python-jose = "^3.3.0"
+cryptography = "^41.0.3"
+python-multipart = "^0.0.6"
+bcrypt = "^4.0.1"
+python-dotenv = "^1.0.0"
+pydantic-settings = "^2.0.3"
+asyncpg = "^0.28.0"
 
 
 [tool.poetry.group.dev.dependencies]
