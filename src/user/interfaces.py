@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 from src.common.interfaces.repository import AsyncBaseRepositoryInterface
 from src.user import schemas as sc
@@ -14,4 +15,6 @@ class UserRepositoryInterface(
         sc.UserView,
     ],
 ):
-    ...
+    @abc.abstractmethod
+    async def get_by_email(self, email: str) -> Optional[sc.UserUnprotectedView]:
+        pass
