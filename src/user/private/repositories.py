@@ -34,7 +34,7 @@ class UserRepository(
     async def get_by_email(self, email: str) -> Optional[sc.UserUnprotectedView]:
         stmt = select(User).where(User.email == email)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             result = await session.scalars(stmt)
             user = result.first()
             if user:

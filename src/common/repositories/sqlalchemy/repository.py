@@ -178,7 +178,7 @@ class SqlAlchemyRepository(
     async def get_list(self, filter_: ListFilterSchemaType) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             result = await session.scalars(stmt)
             filter_.set_total(
                 await session.scalar(
@@ -195,16 +195,17 @@ class SqlAlchemyRepository(
     ) -> List[ViewSchemaType]:
         stmt = self._get_list_statement(filter_)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             result = await session.scalars(stmt.limit(None).offset(None))
             return [self._model_to_pydantic(model, self.view_model) for model in result]
 
     async def create(self, obj_in: CreateSchemaType) -> Optional[ViewSchemaType]:
         model = self._pydantic_to_model(obj_in, self.model)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             session.add(model)
             await session.flush()
+            await session.commit()
             return self._model_to_pydantic(model, self.view_model)
 
     async def update(
@@ -212,22 +213,29 @@ class SqlAlchemyRepository(
     ) -> Optional[ViewSchemaType]:
         stmt = self._get_statement(filter_)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             result = await session.scalar(stmt)
 
             if result is None:
                 return None
-            result.__dict__
             model = self._pydantic_to_model(obj_in, result)
 
             session.add(result)
             await session.flush()
+            if not model:
+                return None
+
+            await session.commit()
             return self._model_to_pydantic(model, self.view_model)
 
     async def delete(self, filter_: FilterSchemaType) -> bool:
         stmt = delete(self.model).where(self.model.id == filter_.id)
 
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             result = await session.execute(stmt)
             await session.flush()
-            return result.rowcount > 0
+
+            if result.rowcount > 0:
+                await session.commit()
+                return True
+            return False

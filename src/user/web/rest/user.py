@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/", tags=["Пользователи"])
 @inject
 async def user_list(
-    # _: Auth = Depends(Auth),
+    _: Auth = Depends(Auth),
     filter_: sc.UserListFilter = Depends(),
     user_service: UserService = Depends(Provide[Container.user_service]),
 ) -> ResponseList[sc.UserView]:
@@ -59,9 +59,7 @@ async def user_create(
     user_service: UserService = Depends(Provide[Container.user_service]),
 ) -> Optional[sc.UserView]:
     try:
-        result = await user_service.repository_create_object(obj_in)
-        await user_service.repository.session.commit()
-        return result
+        return await user_service.repository_create_object(obj_in)
     except UserEmailExistsError as ex:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -85,7 +83,6 @@ async def user_update(
 
     result = await user_service.repository_update_object(filter_, obj_in)
     if result:
-        await user_service.repository.session.commit()
         return result
     raise HTTPNotFoundException
 
@@ -103,6 +100,5 @@ async def user_delete(
 ) -> None:
     filter_ = sc.UserFilter(id=id)
     deleted = await user_service.repository_delete_object(filter_)
-    if deleted:
-        await user_service.repository.session.commit()
-    raise HTTPNotFoundException
+    if not deleted:
+        raise HTTPNotFoundException
