@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = Field(env="DB_PASSWORD")
     DB_DSN: Optional[str] = Field(None, env="DB_DSN")
 
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(
+        env="JWT_REFRESH_TOKEN_EXPIRE_MINUTES",
+    )
+    JWT_SECRET_KEY: str = Field(env="JWT_SECRET_KEY")
+    JWT_REFRESH_SECRET_KEY: str = Field(env="JWT_REFRESH_SECRET_KEY")
+
     @no_type_check
     @field_validator("DB_DSN")
     def assemble_db_dsn(
