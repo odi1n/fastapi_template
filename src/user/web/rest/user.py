@@ -12,8 +12,6 @@ from src.user.services import UserService
 
 router = APIRouter()
 
-token_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
-
 
 @router.get("/", tags=["Пользователи"])
 @inject
