@@ -1,12 +1,7 @@
 from typing import Optional
 
-from sqlalchemy import Select, or_, select
-from sqlalchemy.orm import (
-    ColumnProperty,
-    DeclarativeMeta,
-    RelationshipProperty,
-    class_mapper,
-)
+from sqlalchemy import Select, select
+from sqlalchemy.orm import ColumnProperty, DeclarativeMeta, RelationshipProperty
 
 from src.common.schemas.filters import ListFilter
 
