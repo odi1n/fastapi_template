@@ -19,12 +19,9 @@ class FilterBuilder:
         if stmt is None:
             stmt = select(self._model)
 
-        stmt = self._search(stmt, filter_).limit(filter_.limit).offset(filter_.offset)
+        stmt = stmt.limit(filter_.limit).offset(filter_.offset)
 
-        return self._sort(
-            stmt,
-            filter_,
-        )
+        return stmt
 
     def get_model_field_to_filter(
         self,
@@ -45,26 +42,3 @@ class FilterBuilder:
                     return None
 
         return field
-
-    def _sort(self, stmt: Select, filter_: ListFilter) -> Select:
-        field, order = filter_.get_sort()
-        if not field:
-            return stmt
-
-        attr = self.get_model_field_to_filter(field.split("__"))
-        if attr:
-            stmt = stmt.order_by(attr if order else attr.desc())
-
-        return stmt
-
-    def _search(self, stmt: Select, filter_: ListFilter) -> Select:
-        if not filter_.search or not isinstance(filter_.search, str):
-            return stmt
-        q = []
-        for prop in class_mapper(self._model).iterate_properties:
-            if isinstance(prop, RelationshipProperty):
-                continue
-            field = getattr(self._model, prop.key)
-            if field.type.python_type is str:
-                q.append(field.icontains(filter_.search))
-        return stmt.where(or_(*q)) if q else stmt
