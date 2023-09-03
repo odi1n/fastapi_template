@@ -1,13 +1,17 @@
 from typing import Optional
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    OAuth2PasswordRequestForm,
+)
 
 from src.user import schemas as sc
 from src.user.auth import Auth
 from src.user.exceptions import UserEmailExistsError
-from src.user.schemas import TokensResponse
+from src.user.schemas import AccessTokenResponse, TokensResponse
 from src.user.services import UserService
 
 router = APIRouter(tags=["Авторизация"])
@@ -55,3 +59,15 @@ async def sign_in(
     access_token = Auth.create_access_token({"sub": user.email})
     refresh_token = Auth.create_refresh_token({"sub": user.email})
     return TokensResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/refresh")
+@inject
+def refresh(
+    credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
+) -> sc.AccessTokenResponse:
+    ref_token = Auth.check_refresh_token(credentials.credentials)
+    if ref_token:
+        access_token = Auth.create_access_token({"sub": ref_token})
+        return AccessTokenResponse(access_token=access_token)
+    raise HTTPException(status_code=401, detail="Incorrect token")
