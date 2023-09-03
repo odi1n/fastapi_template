@@ -34,10 +34,7 @@ class UserFilter(Filter):
 
 
 class UserListFilter(ListFilter):
-    full_name: Optional[str]
-
-    class FilterConfig:
-        model = UserView
+    ...
 
 
 class AccessTokenResponse(pd.BaseModel):
