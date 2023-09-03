@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = Field(env="DB_PASSWORD")
     DB_DSN: Optional[str] = Field(None, env="DB_DSN")
 
+    JWT_ALGORITHM: str = Field(env="JWT_ALGORITHM")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
     JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(
         env="JWT_REFRESH_TOKEN_EXPIRE_MINUTES",

@@ -42,7 +42,7 @@ class Auth:
             payload = jwt.decode(
                 token=token,
                 key=setting.JWT_REFRESH_SECRET_KEY,
-                algorithms="HS256",
+                algorithms=setting.JWT_ALGORITHM,
             )
             email = payload.get("sub")
             if email is None:
@@ -64,7 +64,7 @@ class Auth:
         token = jwt.encode(
             to_encode,
             setting.JWT_SECRET_KEY,
-            algorithm="HS256",
+            algorithm=setting.JWT_ALGORITHM,
         )
         return token
 
