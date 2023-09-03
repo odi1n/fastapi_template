@@ -1,25 +1,26 @@
 from typing import Optional
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
+from fastapi.security import OAuth2PasswordBearer
 
 from src.common.exceptions.http import HTTPNotFoundException
 from src.common.schemas.response import ResponseList
-from src.containers import Container
 from src.user import schemas as sc
 from src.user.auth import Auth
-from src.user.exceptions import UserEmailExistsError
 from src.user.services import UserService
 
 router = APIRouter()
+
+token_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
 
 @router.get("/", tags=["Пользователи"])
 @inject
 async def user_list(
-    _: Auth = Depends(Auth),
+    _: Auth = Depends(Auth()),
     filter_: sc.UserListFilter = Depends(),
-    user_service: UserService = Depends(Provide[Container.user_service]),
+    user_service: UserService = Depends(Provide["services.user_service"]),
 ) -> ResponseList[sc.UserView]:
     data = await user_service.repository_objects(filter_)
     return ResponseList[sc.UserView](
@@ -37,34 +38,14 @@ async def user_list(
 )
 @inject
 async def user(
-    # _: Auth = Depends(Auth),
+    _: Auth = Depends(Auth()),
     filter_: sc.UserFilter = Depends(),
-    user_service: UserService = Depends(Provide[Container.user_service]),
+    user_service: UserService = Depends(Provide["services.user_service"]),
 ) -> sc.UserView:
     model = await user_service.repository_object(filter_)
     if not model:
         raise HTTPNotFoundException
     return model
-
-
-@router.post(
-    "/",
-    tags=["Пользователи"],
-    status_code=status.HTTP_201_CREATED,
-)
-@inject
-async def user_create(
-    obj_in: sc.UserCreate,
-    _: Auth = Depends(Auth),
-    user_service: UserService = Depends(Provide[Container.user_service]),
-) -> Optional[sc.UserView]:
-    try:
-        return await user_service.repository_create_object(obj_in)
-    except UserEmailExistsError as ex:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Email {ex.email} is exists",
-        ) from ex
 
 
 @router.put(
@@ -76,8 +57,8 @@ async def user_create(
 async def user_update(
     id: int,
     obj_in: sc.UserUpdate,
-    _: Auth = Depends(Auth),
-    user_service: UserService = Depends(Provide[Container.user_service]),
+    _: Auth = Depends(Auth()),
+    user_service: UserService = Depends(Provide["services.user_service"]),
 ) -> Optional[sc.UserView]:
     filter_ = sc.UserFilter(id=id)
 
@@ -95,8 +76,8 @@ async def user_update(
 @inject
 async def user_delete(
     id: int,
-    _: Auth = Depends(Auth),
-    user_service: UserService = Depends(Provide[Container.user_service]),
+    _: Auth = Depends(Auth()),
+    user_service: UserService = Depends(Provide["services.user_service"]),
 ) -> None:
     filter_ = sc.UserFilter(id=id)
     deleted = await user_service.repository_delete_object(filter_)
