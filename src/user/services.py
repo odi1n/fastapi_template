@@ -1,13 +1,25 @@
 from typing import Optional
 
-import bcrypt
+from passlib.context import CryptContext
 
 from src.common.mixins.services import ServiceRepositoryMixin
 from src.user import schemas as sc
+from src.user.exceptions import UserEmailExistsError
 from src.user.interfaces import UserRepositoryInterface
+
+password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserService(ServiceRepositoryMixin[UserRepositoryInterface, sc.UserView]):
+    async def repository_create_object(  # type: ignore
+        self,
+        obj_in: sc.UserCreate,
+    ) -> Optional[sc.UserView]:
+        obj_in.password = self.get_password_hash(obj_in.password)
+        if await self.repository.get_by_email(obj_in.email):
+            raise UserEmailExistsError(obj_in.email)
+        return await super().repository_create_object(obj_in)
+
     async def authenticate_user(
         self,
         email: str,
@@ -20,10 +32,8 @@ class UserService(ServiceRepositoryMixin[UserRepositoryInterface, sc.UserView]):
 
     @staticmethod
     def get_password_hash(plain_password: str) -> str:
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(plain_password.encode(), salt).decode()
-        return hashed
+        return password_context.hash(plain_password)
 
     @staticmethod
     def password_verify(plain_password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
+        return password_context.verify(plain_password, hashed_password)
