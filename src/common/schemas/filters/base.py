@@ -10,8 +10,6 @@ class BaseFilter(BaseModel):
 class BaseListFilter(BaseModel):
     limit: int = Field(100, gt=0)
     offset: int = Field(0, ge=0)
-    sort: Optional[str]
-    search: Optional[str]
 
     _total: int = PrivateAttr(0)
 
@@ -25,17 +23,3 @@ class BaseListFilter(BaseModel):
             "limit": self.limit,
             "offset": self.offset,
         }
-
-    def get_sort(self) -> tuple[Optional[str], int]:
-        if not isinstance(self.sort, str):
-            return None, 0
-
-        field = self.sort.strip("+- ")
-        if not field:
-            return None, 0
-
-        direct = 0 if self.sort.strip().startswith("-") else 1
-        if self.__filter_config__.sort == "*" or field in self.__filter_config__.sort:
-            return field, direct
-
-        return None, 0
