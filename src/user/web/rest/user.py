@@ -2,7 +2,6 @@ from typing import Optional
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
-from fastapi.security import OAuth2PasswordBearer
 
 from src.common.exceptions.http import HTTPNotFoundException
 from src.common.schemas.response import ResponseList
