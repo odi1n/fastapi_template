@@ -19,8 +19,8 @@ class Configuration:
         if not self.routers:
             return None
 
-        for router in self.routers:
-            app.include_router(router)
+        for router, url in self.routers:
+            app.include_router(router, prefix=url)
 
     def register_middleware(self, app: FastAPI) -> None:
         if not self.middlewares_class:

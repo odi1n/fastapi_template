@@ -5,7 +5,7 @@ from src.containers import Container
 from src.settings import setting
 from src.user.web.rest import auth_router, user_router
 
-__routers__ = Configuration(routers=(user_router, auth_router))
+__routers__ = Configuration(routers=((user_router, "/user"), (auth_router, "/auth")))
 __middleware__ = Configuration(middlewares_class=None)
 
 
